@@ -4,18 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"txsystem/internal/transaction/messaging"
+	"txsystem/internal/common/types"
 	"txsystem/internal/transaction/models"
 	"txsystem/internal/transaction/repository"
-	"txsystem/internal/transaction/types"
 )
 
 type TransactionService struct {
-	kc   messaging.ProducerConnection
+	kc   types.ProducerConnection
 	repo repository.TransactionRepository
 }
 
-func NewTransactionService(kc messaging.ProducerConnection, repo repository.TransactionRepository) *TransactionService {
+func NewTransactionService(kc types.ProducerConnection, repo repository.TransactionRepository) *TransactionService {
 	return &TransactionService{
 		kc:   kc,
 		repo: repo,

@@ -24,6 +24,10 @@ transaction:
 	$(MAKE) transaction-api-doc &
 	reflex -r '\.go$$' -s -- sh -c "go run ./cmd/transaction-service/main.go"
 
+consumer:
+	@echo "Running kafka consumer..."
+	sh -c "go run ./cmd/transaction-consumer/main.go"
+
 # Run all services concurrently
 all:
 	# Use GNU parallel or run in background (POSIX sh)

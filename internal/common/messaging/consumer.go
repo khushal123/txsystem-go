@@ -4,22 +4,25 @@ import (
 	"context"
 	"os"
 	"time"
-	"txsystem/internal/transaction/service"
+	"txsystem/internal/common/types"
 
 	"github.com/labstack/gommon/log"
 	"github.com/twmb/franz-go/pkg/kgo"
 )
 
-type KafkaConsumer struct {
+type kafkaConsumer struct {
 	client    *kgo.Client
 	topic     string
-	groupID   string
 	connected bool
 }
 
-func NewKafkaConsumer(brokers []string, topic string) *KafkaConsumer {
+func NewKafkaConsumer(brokers []string, topic string) types.ConsumerConnection {
+	groupID := "transaction-consumer-group"
+
 	client, err := kgo.NewClient(
 		kgo.SeedBrokers(brokers...),
+		kgo.ConsumerGroup(groupID),
+		kgo.ConsumeTopics(topic),
 		kgo.WithLogger(kgo.BasicLogger(os.Stderr, kgo.LogLevelInfo, nil)),
 	)
 	if err != nil {
@@ -27,13 +30,16 @@ func NewKafkaConsumer(brokers []string, topic string) *KafkaConsumer {
 		return nil
 	}
 
-	return &KafkaConsumer{
+	return &kafkaConsumer{
 		client: client,
 		topic:  topic,
 	}
 }
-func (kc *KafkaConsumer) Consume(ctx context.Context, handler func(key, value []byte) error, ms *service.MessageProcessor) {
+
+func (kc *kafkaConsumer) consume(ctx context.Context, handler func(key, value []byte) error) {
 	go func() {
+		log.Infof("Starting Kafka consumer for topic: %s", kc.topic)
+
 		for {
 			select {
 			case <-ctx.Done():
@@ -53,29 +59,38 @@ func (kc *KafkaConsumer) Consume(ctx context.Context, handler func(key, value []
 					continue
 				}
 
+				log.Infof("Received %d messages", len(records))
+
 				for _, r := range records {
-					if err := handler(r.Key, r.Value); err != nil {
-						log.Errorf("Message handler error: %v", err)
+					// Add additional logging for debugging
+					log.Debugf("Processing message: key=%s offset=%d partition=%d",
+						string(r.Key), r.Offset, r.Partition)
+
+					// Process the message
+					err := handler(r.Key, r.Value)
+					if err == nil {
+						if commitErr := kc.client.CommitRecords(ctx, r); commitErr != nil {
+							log.Errorf("Failed to commit offset: %v", commitErr)
+						} else {
+							log.Debugf("Successfully committed offset for key=%s", string(r.Key))
+						}
 					}
-					kc.client.CommitRecords(ctx, r)
 				}
 			}
 		}
 	}()
 }
 
-func (kc *KafkaConsumer) StartConsumer(ctx context.Context, ms *service.MessageProcessor) {
-	// Define your message handler here or accept it as param if you want flexibility
+func (kc *kafkaConsumer) StartConsumer(ctx context.Context, ms types.MessageProcessor) {
 	handler := func(key, value []byte) error {
-		log.Infof("Consumed message key=%s value=%s", string(key), string(value))
-		// put your actual processing logic here, or call another internal function
-		return nil
+		log.Infof("Processing message: key=%s", string(key))
+		return ms.ProcessMessage(string(value))
 	}
 
-	kc.Consume(ctx, handler, ms)
+	kc.consume(ctx, handler)
 }
 
-func (kc *KafkaConsumer) IsConnected() bool {
+func (kc *kafkaConsumer) IsConnected() bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
@@ -88,7 +103,7 @@ func (kc *KafkaConsumer) IsConnected() bool {
 	return true
 }
 
-func (kc *KafkaConsumer) Close() {
+func (kc *kafkaConsumer) Close() {
 	if kc.client != nil {
 		kc.client.Close()
 	}

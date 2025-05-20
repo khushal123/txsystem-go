@@ -1,11 +1,8 @@
-package messaging
+package types
 
 import (
 	"context"
-	"sync"
 )
-
-var once sync.Once
 
 type Connection interface {
 	Close()
@@ -18,5 +15,9 @@ type ProducerConnection interface {
 
 type ConsumerConnection interface {
 	Connection
-	Consume(ctx context.Context, handler func(key, value []byte) error)
+	StartConsumer(ctx context.Context, ms MessageProcessor)
+}
+
+type MessageProcessor interface {
+	ProcessMessage(message string) error
 }

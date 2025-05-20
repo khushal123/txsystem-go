@@ -1,13 +1,13 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"strings"
+	"txsystem/internal/common/messaging"
+	"txsystem/internal/common/types"
 	_ "txsystem/internal/transaction/docs"
 	"txsystem/internal/transaction/handler"
-	"txsystem/internal/transaction/messaging"
 	"txsystem/internal/transaction/models"
 
 	"github.com/joho/godotenv"
@@ -20,6 +20,11 @@ import (
 )
 
 // LoadEnv loads env vars; already done in init()
+func init() {
+	if err := godotenv.Load(); err != nil {
+		panic("Error loading .env file")
+	}
+}
 
 func setupDatabase() (*gorm.DB, error) {
 	port := os.Getenv("POSTGRES_PORT")
@@ -46,7 +51,7 @@ func setupDatabase() (*gorm.DB, error) {
 	return db, nil
 }
 
-func setupProducer() messaging.ProducerConnection {
+func setupProducer() types.ProducerConnection {
 	brokers := os.Getenv("KAFKA_BROKERS")
 	topic := os.Getenv("KAFKA_TOPIC")
 
@@ -62,24 +67,7 @@ func setupProducer() messaging.ProducerConnection {
 	return conn
 }
 
-func setupConsumer() *messaging.KafkaConsumer {
-	brokers := os.Getenv("KAFKA_CONSUMER_BROKERS")
-	topic := os.Getenv("KAFKA_CONSUMER_TOPIC")
-
-	if brokers == "" || topic == "" {
-		log.Fatal("Consumer Kafka config missing in env vars")
-	}
-	log.Info("Creating Kafka consumer...")
-
-	consumer := messaging.NewKafkaConsumer(strings.Split(brokers, ","), topic)
-	if consumer == nil || !consumer.IsConnected() {
-		log.Fatal("Failed to connect Kafka consumer")
-	}
-
-	return consumer
-}
-
-func setupEchoServer(kafkaProducer messaging.ProducerConnection, db *gorm.DB) *echo.Echo {
+func setupEchoServer(kafkaProducer types.ProducerConnection, db *gorm.DB) *echo.Echo {
 	e := echo.New()
 	e.Use(middleware.RecoverWithConfig(middleware.RecoverConfig{
 		StackSize: 1 << 10,
@@ -107,14 +95,6 @@ func run() {
 	producer := setupProducer()
 	defer producer.Close()
 
-	consumer := setupConsumer()
-	defer consumer.Close()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	consumer.StartConsumer(ctx)
-
 	echoServer := setupEchoServer(producer, db)
 
 	port := os.Getenv("ACCOUNT_SERVICE_PORT")
@@ -124,12 +104,6 @@ func run() {
 	log.Infof("Starting server on port %s", port)
 	if err := echoServer.Start(fmt.Sprintf(":%s", port)); err != nil {
 		log.Fatal("Echo server failed:", err)
-	}
-}
-
-func init() {
-	if err := godotenv.Load(); err != nil {
-		panic("Error loading .env file")
 	}
 }
 
