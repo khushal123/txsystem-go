@@ -1,0 +1,36 @@
+{
+    "$schema": "https://www.krakend.io/schema/v2.10/krakend.json",
+    "version": 3,
+    "name": "Banking API Gateway",
+    "port": 8080,
+    "endpoints": [
+        {
+            "endpoint": "/transactions",
+            "method": "POST",
+            "backend": [
+                {
+                    "url_pattern": "/transactions",
+                    "method": "POST",
+                    "host": [
+                        "http://transaction-service.internal"
+                    ]
+                }
+            ],
+            "extra_config": {}
+        },
+        {
+            "endpoint": "/transaction-status/{transaction_id}",
+            "method": "GET",
+            "backend": [
+                {
+                    "url_pattern": "/transactions/{transaction_id}/status",
+                    "method": "GET",
+                    "host": [
+                        "http://transaction-service.internal"
+                    ]
+                }
+            ],
+            "extra_config": {}
+        }
+    ]
+}
