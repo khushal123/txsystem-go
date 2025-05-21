@@ -6,8 +6,8 @@ import (
 	"strings"
 	"txsystem/internal/account/handler"
 	"txsystem/internal/account/models"
-	"txsystem/internal/common/messaging"
-	"txsystem/internal/common/types"
+	"txsystem/pkg/common/messaging"
+	"txsystem/pkg/common/types"
 
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"

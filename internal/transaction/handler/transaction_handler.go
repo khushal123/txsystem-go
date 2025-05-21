@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"txsystem/internal/common/types"
 	"txsystem/internal/transaction/repository"
 	"txsystem/internal/transaction/service"
+	"txsystem/pkg/common/types"
 
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
@@ -28,9 +28,9 @@ func NewHandler(s *service.TransactionService) *Handler {
 // @Accept json
 // @Produce json
 // @Param transaction body types.TransactionRequest true "Transaction request"
-// @Success 201
-// @Failure 400
-// @Failure 500
+// @Success 201 {object} map[string]string "message:transaction created"
+// @Failure 400 {object} map[string]string "error:invalid request"
+// @Failure 500 {object} map[string]string "error:failed to create transaction"
 // @Router /api/v1/transactions [post]
 func (h *Handler) CreateTransaction(c echo.Context) error {
 	var req types.TransactionRequest
@@ -46,14 +46,14 @@ func (h *Handler) CreateTransaction(c echo.Context) error {
 }
 
 // @Summary Get transactions
-// @Description GetTransaction handles fetching list of last 10 transactions
+// @Description GetTransactions handles fetching list of last 10 transactions
 // @Tags transactions
 // @Produce json
-// @Success 200 {array} types.TransactionResponse[]
-// @Failure 400
-// @Failure 404
-// @Failure 500
-// @Router /api/v1/transactions/ [get]
+// @Success 200 {array} types.TransactionResponse "List of transactions"
+// @Failure 400 {object} map[string]string "error:bad request"
+// @Failure 404 {object} map[string]string "error:transactions not found"
+// @Failure 500 {object} map[string]string "error:failed to fetch transactions"
+// @Router /api/v1/transactions [get]
 func (h *Handler) GetTransactions(c echo.Context) error {
 	transactions, err := h.service.GetTransactions(c.Request().Context())
 	if err != nil {
@@ -68,10 +68,10 @@ func (h *Handler) GetTransactions(c echo.Context) error {
 // @Tags transactions
 // @Produce json
 // @Param id path int true "Transaction ID"
-// @Success 200 {object} types.TransactionResponse
-// @Failure 400
-// @Failure 404
-// @Failure 500
+// @Success 200 {object} types.TransactionResponse "Transaction details"
+// @Failure 400 {object} map[string]string "error:invalid transaction ID"
+// @Failure 404 {object} map[string]string "error:transaction not found"
+// @Failure 500 {object} map[string]string "error:failed to fetch transaction"
 // @Router /api/v1/transactions/{id} [get]
 func (h *Handler) GetTransaction(c echo.Context) error {
 	idParam := c.Param("id")

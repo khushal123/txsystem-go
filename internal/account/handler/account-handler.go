@@ -3,7 +3,7 @@ package handler
 import (
 	"strconv"
 	"txsystem/internal/account/service"
-	"txsystem/internal/common/types"
+	"txsystem/pkg/common/types"
 
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"

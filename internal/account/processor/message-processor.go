@@ -2,7 +2,7 @@ package processor
 
 import (
 	"txsystem/internal/account/service"
-	"txsystem/internal/common/types"
+	"txsystem/pkg/common/types"
 
 	"gorm.io/gorm"
 )

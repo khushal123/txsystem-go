@@ -16,12 +16,9 @@ ledger:
 
 transaction-api-doc:
 	@echo "Generating transaction API documentation..."
-	go generate ./internal/transaction
-
+	go generate
 # Run transaction service with reflex watch
 transaction:
-	@echo "Generating transaction API documentation..."
-	$(MAKE) transaction-api-doc &
 	reflex -r '\.go$$' -s -- sh -c "go run ./cmd/transaction-service/main.go"
 
 consumer:

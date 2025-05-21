@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"txsystem/internal/account/processor"
-	"txsystem/internal/common/messaging"
-	"txsystem/internal/common/types"
+	"txsystem/pkg/common/messaging"
+	"txsystem/pkg/common/types"
 
 	"github.com/joho/godotenv"
 	"github.com/labstack/gommon/log"

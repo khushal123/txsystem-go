@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"txsystem/internal/common/types"
 	"txsystem/internal/transaction/models"
 	"txsystem/internal/transaction/repository"
+	"txsystem/pkg/common/types"
 )
 
 type TransactionService struct {

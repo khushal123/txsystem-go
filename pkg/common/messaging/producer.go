@@ -4,7 +4,7 @@ import (
 	"context"
 	"os"
 	"time"
-	"txsystem/internal/common/types"
+	"txsystem/pkg/common/types"
 
 	"github.com/labstack/gommon/log"
 	"github.com/twmb/franz-go/pkg/kgo"

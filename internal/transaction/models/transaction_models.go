@@ -2,7 +2,7 @@ package models
 
 import (
 	"time"
-	"txsystem/internal/common/types"
+	"txsystem/pkg/common/types"
 )
 
 type Transaction struct {

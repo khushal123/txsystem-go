@@ -5,32 +5,82 @@
     "port": 8080,
     "endpoints": [
         {
-            "endpoint": "/transactions",
+            "endpoint": "/api/v1/accounts/{id}",
+            "method": "GET",
+            "backend": [
+                {
+                    "url_pattern": "/api/v1/transactions/{id}",
+                    "method": "GET",
+                    "host": [
+                        "http://account-service.internal"
+                    ]
+                }
+            ]
+        },
+        {
+            "endpoint": "/api/v1/transactions",
             "method": "POST",
             "backend": [
                 {
-                    "url_pattern": "/transactions",
+                    "url_pattern": "/api/v1/transactions",
                     "method": "POST",
                     "host": [
                         "http://transaction-service.internal"
                     ]
                 }
-            ],
-            "extra_config": {}
+            ]
         },
         {
-            "endpoint": "/transaction-status/{transaction_id}",
+            "endpoint": "/api/v1/transactions",
             "method": "GET",
             "backend": [
                 {
-                    "url_pattern": "/transactions/{transaction_id}/status",
+                    "url_pattern": "/api/v1/transactions",
                     "method": "GET",
                     "host": [
                         "http://transaction-service.internal"
                     ]
                 }
-            ],
-            "extra_config": {}
+            ]
+        },
+        {
+            "endpoint": "/api/v1/transactions/{id}",
+            "method": "GET",
+            "backend": [
+                {
+                    "url_pattern": "/api/v1/transactions/{id}",
+                    "method": "GET",
+                    "host": [
+                        "http://transaction-service.internal"
+                    ]
+                }
+            ]
+        },
+        {
+            "endpoint": "/api/v1/ledger/account/{accountId}",
+            "method": "GET",
+            "backend": [
+                {
+                    "url_pattern": "/api/v1/ledger/account/{accountId}",
+                    "method": "GET",
+                    "host": [
+                        "http://ledger-service.internal"
+                    ]
+                }
+            ]
+        },
+        {
+            "endpoint": "/api/v1/ledger",
+            "method": "GET",
+            "backend": [
+                {
+                    "url_pattern": "/api/v1/ledger",
+                    "method": "GET",
+                    "host": [
+                        "http://ledger-service.internal"
+                    ]
+                }
+            ]
         }
     ]
 }

@@ -1,0 +1,146 @@
+definitions:
+  types.TransactionRequest:
+    properties:
+      amount:
+        type: number
+      description:
+        type: string
+      destination_account:
+        type: string
+      source_account:
+        type: string
+      transaction_type:
+        type: string
+    type: object
+  types.TransactionResponse:
+    properties:
+      amount:
+        type: number
+      created_at:
+        type: string
+      description:
+        type: string
+      destination_account:
+        type: string
+      id:
+        type: integer
+      source_account:
+        type: string
+      status:
+        type: string
+      transaction_id:
+        type: string
+      transaction_type:
+        type: string
+      updated_at:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /api/v1/transactions:
+    get:
+      description: GetTransactions handles fetching list of last 10 transactions
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of transactions
+          schema:
+            items:
+              $ref: '#/definitions/types.TransactionResponse'
+            type: array
+        "400":
+          description: error:bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: error:transactions not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: error:failed to fetch transactions
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get transactions
+      tags:
+      - transactions
+    post:
+      consumes:
+      - application/json
+      description: CreateTransaction handles creating a transaction.
+      parameters:
+      - description: Transaction request
+        in: body
+        name: transaction
+        required: true
+        schema:
+          $ref: '#/definitions/types.TransactionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: message:transaction created
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: error:invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: error:failed to create transaction
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a new transaction
+      tags:
+      - transactions
+  /api/v1/transactions/{id}:
+    get:
+      description: GetTransaction handles fetching a transaction by ID.
+      parameters:
+      - description: Transaction ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Transaction details
+          schema:
+            $ref: '#/definitions/types.TransactionResponse'
+        "400":
+          description: error:invalid transaction ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: error:transaction not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: error:failed to fetch transaction
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get a transaction by ID
+      tags:
+      - transactions
+swagger: "2.0"
