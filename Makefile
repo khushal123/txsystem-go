@@ -1,34 +1,59 @@
-.PHONY: all account ledger transaction
+.PHONY: run-account run-transaction run-ledger \
+        account transaction transaction-consumer \
+        ledger ledger-consumer
 
-create-topics:
-	@echo "Creating kafka topics..."
-	docker exec --workdir /scripts/ kafka bash ./create-topic.sh 
-	
-
-# Run account service with reflex watch
+# --- Account ---
 account:
-	reflex -r '\.go$$' -s -- sh -c "go run ./cmd/account-service/main.go"
+	go run ./cmd/account-service/main.go
 
-# Run ledger service with reflex watch
-ledger:
-	reflex -r '\.go$$' -s -- sh -c "go run ./cmd/ledger-service/main.go"
+run-account:
+	$(MAKE) account
 
-
-transaction-api-doc:
-	@echo "Generating transaction API documentation..."
-	go generate
-# Run transaction service with reflex watch
+# --- Transaction ---
 transaction:
-	reflex -r '\.go$$' -s -- sh -c "go run ./cmd/transaction-service/main.go"
+	go run ./cmd/transaction-service/main.go
 
-consumer:
-	@echo "Running kafka consumer..."
-	sh -c "go run ./cmd/transaction-consumer/main.go"
+transaction-consumer:
+	go run ./cmd/transaction-consumer/main.go
 
-# Run all services concurrently
-all:
-	# Use GNU parallel or run in background (POSIX sh)
-	$(MAKE) account &
-	$(MAKE) ledger &
+run-transaction:
 	$(MAKE) transaction &
+	$(MAKE) transaction-consumer &
 	wait
+
+# --- Ledger ---
+ledger:
+	go run ./cmd/ledger-service/main.go
+
+ledger-consumer:
+	go run ./cmd/ledger-consumer/main.go
+
+run-ledger:
+	$(MAKE) ledger &
+	$(MAKE) ledger-consumer &
+	wait
+
+# Build the base image used in all service Dockerfiles
+build-base:
+	docker build -f base.Dockerfile -t txsystem-base .
+
+# Start services
+up:
+	docker build -f base.Dockerfile -t txsystem-base .
+	docker compose build
+	docker compose up -d
+
+# Stop services
+down:
+	docker compose down 
+
+# Force rebuild everything (cleans Docker cache)
+rebuild:
+	docker build --no-cache -f base.Dockerfile -t txsystem-base .
+	docker compose build --no-cache
+
+clean: down
+	docker volume rm txsystem_postgres_data || true
+	docker volume rm txsystem_mongo_data || true
+
+
