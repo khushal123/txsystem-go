@@ -53,10 +53,10 @@ func setupDatabase() (*gorm.DB, error) {
 
 func setupProducer() types.ProducerConnection {
 	brokers := os.Getenv("KAFKA_BROKERS")
-	topic := os.Getenv("KAFKA_TOPIC")
+	topic := os.Getenv("KAFKA_TOPIC_TRANSCATIONS")
 
 	if brokers == "" || topic == "" {
-		log.Fatal("KAFKA_BROKERS or KAFKA_TOPIC env var not set")
+		log.Fatal("KAFKA_BROKERS or KAFKA_TOPIC_TRANSCATIONS env var not set")
 	}
 
 	conn := messaging.GetProducerConnection(strings.Split(brokers, ","), topic)

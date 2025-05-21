@@ -28,7 +28,7 @@ func (as *AccountService) CreateAccount(ctx context.Context, owner, currency str
 	return account, nil
 }
 
-func (as *AccountService) GetAccount(ctx context.Context, id uint) (*models.Account, error) {
+func (as *AccountService) GetAccount(ctx context.Context, id int) (*models.Account, error) {
 	var account models.Account
 	if err := as.db.WithContext(ctx).First(&account, id).Error; err != nil {
 		return nil, err

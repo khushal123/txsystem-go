@@ -78,10 +78,10 @@ func setupDatabase() (*gorm.DB, error) {
 
 func setupKafkaConsumer() types.ConsumerConnection {
 	brokers := os.Getenv("KAFKA_BROKERS")
-	topic := os.Getenv("KAFKA_TOPIC")
+	topic := os.Getenv("KAFKA_TOPIC_TRANSCATIONS")
 
 	if brokers == "" || topic == "" {
-		log.Fatal("KAFKA_BROKERS or KAFKA_TOPIC env var not set")
+		log.Fatal("KAFKA_BROKERS or KAFKA_TOPIC_TRANSCATIONS env var not set")
 	}
 
 	consumer := messaging.NewKafkaConsumer(strings.Split(brokers, ","), topic)
