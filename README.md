@@ -59,14 +59,7 @@ The `Makefile` provides several targets to help with development:
 *   `make transaction`: Builds and runs the transaction service.
 *   `make consumer`: Builds and runs the Kafka consumer service.
 *   `make all`: Builds and runs all services.
-*   `make transaction-api-doc`: Generates the API documentation for the transaction service.
 
-# API Documentation
-
-API documentation is generated using Swagger. The Swagger specification files can be found in the `docs/` directory:
-
-*   `docs/swagger.json`
-*   `docs/swagger.yaml`
 
 Once the services are running, you can typically access the Swagger UI through one of the services (e.g., the transaction service or an API gateway if implemented) at a path like `/swagger/index.html`. Refer to the specific service's documentation or configuration for the exact URL.
 
