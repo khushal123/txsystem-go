@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 	_ "txsystem/docs"
 	"txsystem/internal/transaction/handler"
 	"txsystem/internal/transaction/models"
@@ -32,15 +33,40 @@ func setupDatabase() (*gorm.DB, error) {
 	password := os.Getenv("POSTGRES_PASSWORD")
 	dbname := os.Getenv("POSTGRES_DB")
 	host := os.Getenv("POSTGRES_HOST")
-	fmt.Println(host, port, user, password, dbname, "this is database")
+
 	dsn := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		host, port, user, password, dbname,
 	)
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	maxRetries := 10
+	retryDelay := 3 * time.Second
+
+	var db *gorm.DB
+	var err error
+
+	for i := 0; i < maxRetries; i++ {
+		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+		if err == nil {
+			// Test the connection
+			sqlDB, pingErr := db.DB()
+			if pingErr == nil {
+				pingErr = sqlDB.Ping()
+			}
+			if pingErr == nil {
+				log.Info("Connected to database")
+				break
+			} else {
+				err = pingErr
+			}
+		}
+
+		log.Errorf("Failed to connect to DB (attempt %d/%d): %v", i+1, maxRetries, err)
+		time.Sleep(retryDelay)
+	}
+
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not connect to database after %d attempts: %w", maxRetries, err)
 	}
 
 	log.Info("Migrating database...")

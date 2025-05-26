@@ -27,8 +27,31 @@ services:
       KAFKA_NUM_PARTITIONS: 3
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
       DEFAULT_TOPICS: "transactions,ledger"
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  kafka-topics-init:
+    image: apache/kafka:4.0.0
+    container_name: kafka-topics-init
+    depends_on:
+      - kafka
+    networks:
+      - backend-net
     volumes:
       - ./scripts:/scripts:ro
+    environment:
+      BOOTSTRAP_SERVER: kafka:9092
+      DEFAULT_TOPICS: ${DEFAULT_TOPICS:-"transactions,logs"}
+      DEFAULT_PARTITIONS: ${DEFAULT_PARTITIONS:-1}
+      DEFAULT_REPLICATION: ${DEFAULT_REPLICATION:-1}
+      KAFKA_PARTITIONS: ${KAFKA_PARTITIONS}
+      KAFKA_REPLICATION: ${KAFKA_REPLICATION}
+    command: ["/scripts/create-topic.sh"]
+    restart: "no"  # Run once and exit 
 
   # PostgreSQL for Account/Transaction
   postgres:
@@ -43,6 +66,12 @@ services:
     # No ports exposed externally
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
 
   # MongoDB for Ledger logs
   mongodb:
@@ -57,12 +86,13 @@ services:
   # Account Service
   account-service:
     build:
-      context: .
+      context: ./deployments
       dockerfile: account.Dockerfile
     container_name: account-service
     depends_on:
       - kafka
       - postgres
+      - kafka-topics-init
     networks:
       - backend-net
     environment:
@@ -71,22 +101,18 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 2s
-      timeout: 5s
-      retries: 10
-      start_period: 10s
+
 
   # Transaction Service + Consumer
   transaction-service:
     build:
-      context: .
+      context: ./deployments
       dockerfile: transaction.Dockerfile
     container_name: transaction-service
     depends_on:
       - kafka
       - postgres
+      - kafka-topics-init
     networks:
       - backend-net
     environment:
@@ -96,22 +122,16 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
 
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 2s
-      timeout: 5s
-      retries: 10
-      start_period: 10s
-
   # Ledger Service + Consumer
   ledger-service:
     build:
-      context: .
+      context: ./deployments
       dockerfile: ledger.Dockerfile
     container_name: ledger-service
     depends_on:
       - kafka
       - mongodb
+      - kafka-topics-init
     networks:
       - backend-net
     environment:
@@ -134,6 +154,41 @@ services:
     volumes:
       - ./gateway:/etc/krakend/:ro
     command: ["run", "-c", "/etc/krakend/krakend.json"]
+
+
+  transaction-consumer:
+    build:
+      context: ./deployments
+      dockerfile: transaction-consumer.Dockerfile
+    container_name: transaction-consumer
+    depends_on:
+      - kafka
+      - postgres
+      - kafka-topics-init
+    networks:
+      - backend-net
+    environment:
+      KAFKA_BROKER: kafka:9092
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+
+  ledger-consumer:
+    restart: "always"  # Run once and exit
+    build:
+      context: ./deployments
+      dockerfile: ledger-consumer.Dockerfile
+    container_name: ledger-consumer
+    depends_on:
+      - kafka
+      - mongodb
+      - kafka-topics-init
+    networks:
+      - backend-net
+    environment:
+      KAFKA_BROKER: kafka:9092
+      MONGODB_URI: mongodb://mongodb:27017
 
 volumes:
   postgres_data:

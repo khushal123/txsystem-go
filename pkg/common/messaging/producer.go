@@ -23,6 +23,10 @@ func connectProducer(brokers []string, topic string) *kafkaProducer {
 		kgo.SeedBrokers(brokers...),
 		kgo.AllowAutoTopicCreation(),
 		kgo.TransactionalID("transaction-producer-1"),
+		kgo.RetryBackoffFn(func(attempt int) time.Duration {
+			return time.Duration(attempt) * time.Second
+		}),
+		kgo.RetryTimeout(30*time.Second),
 		kgo.WithLogger(kgo.BasicLogger(
 			os.Stderr,        // log to stderr
 			kgo.LogLevelInfo, // set log level (Debug, Info, Warn, Error)

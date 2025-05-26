@@ -40,7 +40,7 @@ run-ledger:
 
 # Build the base image used in all service Dockerfiles
 build-base:
-	docker build -f base.Dockerfile -t txsystem-base .
+	docker build -f ./deployments/base.Dockerfile -t txsystem-base .
 
 # Start services
 build-up:
